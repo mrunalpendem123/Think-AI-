@@ -7,24 +7,28 @@ export const AVAILABLE_MODELS = [
     name: "Qwen 2.5 3B (Browser)",
     provider: "Alibaba",
     size: "3B",
+    isLocal: false,
   },
   {
     id: "Llama-3.2-3B-Instruct-q4f16_1-MLC",
     name: "Llama 3.2 3B (Browser)",
     provider: "Meta",
     size: "3B",
+    isLocal: false,
   },
   {
     id: "gemma-2-2b-it-q4f32_1-MLC",
     name: "Gemma 2 2B (Browser)",
     provider: "Google",
     size: "2B",
+    isLocal: false,
   },
   {
     id: "Phi-3.5-mini-instruct-q4f16_1-MLC",
     name: "Phi 3.5 Mini (Browser)",
     provider: "Microsoft",
     size: "3.8B",
+    isLocal: false,
   },
 ];
 
