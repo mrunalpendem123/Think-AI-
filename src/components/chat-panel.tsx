@@ -96,7 +96,7 @@ export const ChatPanel = ({ threadId }: { threadId?: number }) => {
 
   return (
     <>
-      {messages.length > 0 || threadId ? (
+      {messages.length > 0 || threadId || (queryMessage && hasRun.current) ? (
         isLoading ? (
           <div className="w-full flex justify-center items-center">
             <LoaderIcon className="animate-spin w-8 h-8" />
