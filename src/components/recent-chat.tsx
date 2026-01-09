@@ -1,8 +1,8 @@
 import { HourglassIcon } from "lucide-react";
-import { ChatModel, ChatSnapshot } from "../../generated";
 import moment from "moment";
 import Link from "next/link";
-import { modelMap } from "./model-selection";
+import { ChatSnapshot } from "../../generated";
+
 
 export default function RecentChat({
   id,
@@ -12,8 +12,7 @@ export default function RecentChat({
   model_name,
 }: ChatSnapshot) {
   const formattedDate = moment(date).fromNow();
-  const model =
-    model_name in modelMap ? modelMap[model_name as ChatModel] : null;
+
 
   return (
     <Link
@@ -33,8 +32,8 @@ export default function RecentChat({
             <p className="text-xs">{formattedDate}</p>
           </div>
           <div className="flex items-center space-x-2 text-foreground/70">
-            {model?.smallIcon}
-            <p className="font-semibold text-xs">{model?.name}</p>
+            {/* <p className="font-semibold text-xs">{model_name}</p> */}
+             <p className="font-semibold text-xs">AI Model</p>
           </div>
         </div>
       </div>
