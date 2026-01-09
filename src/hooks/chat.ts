@@ -153,49 +153,41 @@ export const useChat = () => {
           let ragContext = "";
           
           if (searchResults && searchResults.length > 0) {
-              // Only attempt MiniRAG if running locally
-              const isLocal = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+              handleEvent({
+                  event: StreamEvent.TEXT_CHUNK,
+                  data: { text: "Analyzing context with MiniRAG..." } 
+              }, state);
 
-              if (isLocal) {
-                  handleEvent({
-                      event: StreamEvent.TEXT_CHUNK,
-                      data: { text: "Analyzing context with MiniRAG..." } 
-                  }, state);
+              try {
+                  const controller = new AbortController();
+                  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s max for MiniRAG
 
-                  try {
-                      const controller = new AbortController();
-                      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s max for MiniRAG
+                  const ragResponse = await fetch('/api/rag', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                          query: request.query,
+                          results: searchResults,
+                          mode: 'mini',
+                          only_need_context: true
+                      }),
+                      signal: controller.signal
+                  });
+                  clearTimeout(timeoutId);
 
-                      const ragResponse = await fetch('/api/rag', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                              query: request.query,
-                              results: searchResults,
-                              mode: 'mini',
-                              only_need_context: true
-                          }),
-                          signal: controller.signal
-                      });
-                      clearTimeout(timeoutId);
-
-                      if (ragResponse.ok) {
-                          const ragData = await ragResponse.json();
-                          if (ragData.context) {
-                              ragContext = ragData.context;
-                              console.log("MiniRAG Context Retrieved");
-                          }
-                      } 
-                  } catch (e) {
-                      console.warn("MiniRAG unavailable (using raw results):", e);
-                  }
-                  
-                  // Clear status text
-                  state.content = ""; 
-              } else {
-                  console.log("MiniRAG skipped (Production mode), using raw search results.");
-                  ragContext = searchResults.map(r => `Title: ${r.title}\nContent: ${r.content}`).join('\n\n');
+                  if (ragResponse.ok) {
+                      const ragData = await ragResponse.json();
+                      if (ragData.context) {
+                          ragContext = ragData.context;
+                          console.log("MiniRAG Context Retrieved");
+                      }
+                  } 
+              } catch (e) {
+                  console.warn("MiniRAG unavailable (using raw results):", e);
               }
+              
+              // Clear status text
+              state.content = ""; 
               
               if (!ragContext) {
                  ragContext = searchResults.map(r => `Title: ${r.title}\nContent: ${r.content}`).join('\n\n');
