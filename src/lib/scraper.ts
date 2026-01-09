@@ -18,7 +18,7 @@ export interface SearchResponse {
 }
 
 export async function scrapeUrl(url: string): Promise<ScrapeResult> {
-    const response = await fetch('/api/search-proxy', {
+    const response = await fetch('/api/search', {
        method: 'POST',
        headers: { 'Content-Type': 'application/json' },
        body: JSON.stringify({ url })
@@ -39,7 +39,7 @@ export async function scrapeUrl(url: string): Promise<ScrapeResult> {
 
 
 export async function searchWeb(query: string): Promise<SearchResponse> {
-    const response = await fetch('/api/search-proxy', {
+    const response = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query, mode: 'search' })
