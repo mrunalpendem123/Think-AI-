@@ -1,14 +1,14 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "./ui/skeleton";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
+    HoverCard,
+    HoverCardContent,
+    HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { useState } from "react";
 import { SearchResult } from "../../generated";
+import { Skeleton } from "./ui/skeleton";
 
 export const SearchResultsSkeleton = () => {
   return (
@@ -29,7 +29,7 @@ export const Logo = ({ url }: { url: string }) => {
     <div className="rounded-full overflow-hidden relative">
       <img
         className="block relative"
-        src={`https://www.google.com/s2/favicons?sz=128&domain=${url}`}
+        src={`/api/image-proxy?url=${encodeURIComponent(`https://www.google.com/s2/favicons?sz=128&domain=${url}`)}`}
         alt="favicon"
         width={16}
         height={16}

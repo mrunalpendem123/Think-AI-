@@ -29,7 +29,7 @@ export function ImageSection({ images }: { images: string[] }) {
             className="aspect-video w-full h-full overflow-hidden hover:scale-[1.03] duration-150 rounded-lg transition-all shadow-md"
           >
             <img
-              src={image}
+              src={`/api/image-proxy?url=${encodeURIComponent(image)}`}
               className="w-full object-cover object-top h-full max-h-[80vh]"
             />
           </a>
