@@ -74,8 +74,8 @@ async function handleSearch(query: string) {
     });
 
     // If we have relevant articles, scrape the top 2 in parallel
-    // DISABLED FOR SPEED: Deep scraping takes 4-8s. Relying on snippets is near-instant.
-    // If we have relevant articles, scrape the top 3 in parallel
+    // DISABLED FOR SPEED and STABILITY: Relying on snippets is faster and less error-prone.
+    /* 
     const urlsToScrape = relevantResults.slice(0, 3).map((r: any) => r.url).filter(Boolean);
     const scrapedContentMap: Record<string, string> = {};
 
@@ -104,6 +104,9 @@ async function handleSearch(query: string) {
 
       await Promise.all(scrapePromises);
     }
+    */
+    // Use empty map since we disabled scraping
+    const scrapedContentMap: Record<string, string> = {};
 
     // Construct structured results for MiniRAG
     const structuredResults = results.slice(0, 6).map((r: any) => {
@@ -121,7 +124,7 @@ async function handleSearch(query: string) {
         };
     });
 
-    const finalContent = structuredResults.map((r: any) => `Title: ${r.title}\nURL: ${r.url}\nContent: ${r.content.substring(0, 500)}...\n`).join('\n\n');
+    const finalContent = structuredResults.map((r: any) => `Title: ${r.title}\nURL: ${r.url}\nContent: ${r.content ? r.content.substring(0, 500) : ''}...\n`).join('\n\n');
 
     return NextResponse.json({
         title: `Search Query: "${query}"`,
@@ -137,6 +140,22 @@ async function handleSearch(query: string) {
       error: e instanceof Error ? e.message : 'Search failed' 
     }, { status: 500 });
   }
+}
+
+export async function GET(req: NextRequest) {
+  return NextResponse.json({ status: 'ok', message: 'Search Proxy Active' });
+}
+
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Allow': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    },
+  });
 }
 
 async function handleScrape(url: string, signal?: AbortSignal) {
