@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
 async function handleSearch(query: string) {
   try {
-    const apiKey = 'sawKl_nOFldN78HAQHFwxixaj90aySp4PTa6trRx';
+    const apiKey = process.env.PARALLEL_API_KEY || 'sawKl_nOFldN78HAQHFwxixaj90aySp4PTa6trRx';
     
     console.log('[Search API] Querying Parallel.ai for:', query);
     
