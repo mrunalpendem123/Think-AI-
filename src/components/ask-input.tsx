@@ -24,7 +24,7 @@ const InputBar = ({
           placeholder={isLoading ? `Initializing: ${progress}` : "Ask anything..."}
           onChange={(e) => setInput(e.target.value)}
           value={input}
-          disabled={isLoading || !isReady}
+          disabled={isLoading}
         />
       </div>
       <div className="flex justify-between">
@@ -38,7 +38,7 @@ const InputBar = ({
             variant="default"
             size="icon"
             className="rounded-full bg-tint aspect-square h-8 w-8 disabled:opacity-20 hover:bg-tint/80 overflow-hidden"
-            disabled={input.trim().length < 5 || !isReady}
+            disabled={input.trim().length < 2 && !isLoading}
           >
             <ArrowUp size={20} />
           </Button>
@@ -109,15 +109,24 @@ export const AskInput = ({
       <form
         className="w-full overflow-hidden"
         onSubmit={(e) => {
-          if (input.trim().length < 5 || !engine) return;
           e.preventDefault();
+          if (input.trim().length < 2) return;
+          
+          if (!engine) {
+              const { loadModel, isLoading } = useWebLLMStore.getState();
+              if (isLoading) return;
+              // Auto-select first model if none selected
+              // Actually, better to just let message pass and let hook handle auto-load, 
+              // BUT hook handles logic better. 
+              // Sending anyway.
+          }
           sendMessage(input);
           setInput("");
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
-            if (input.trim().length < 5 || !engine) return;
+            if (input.trim().length < 2) return;
             sendMessage(input);
             setInput("");
           }

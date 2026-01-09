@@ -85,9 +85,34 @@ export const useChat = () => {
     retry: false,
     mutationFn: async (request) => {
       if (!engine) {
-          console.warn("Engine not ready...");
-          // Try to load model if engine is missing (optional)
+          console.warn("Engine not ready, attempting to auto-load default...");
+          const { loadModel, currentModelId } = useWebLLMStore.getState();
+          const targetModel = currentModelId || AVAILABLE_MODELS[0].id;
+          
+          handleEvent({
+              event: StreamEvent.TEXT_CHUNK,
+              data: { text: "Initializing AI Model (" + targetModel + ")... Please wait.\n\n" }
+          }, {
+            role: MessageRole.ASSISTANT,
+            content: "",
+            sources: [],
+            related_queries: [],
+            images: [],
+            agent_response: null,
+          });
+
+          try {
+              await loadModel(targetModel);
+              // Wait a bit for state to settle
+              await new Promise(r => setTimeout(r, 100));
+          } catch (e) {
+              console.error("Auto-load failed:", e);
+              throw new Error("Failed to initialize AI model.");
+          }
       }
+      
+      // Refresh engine reference
+      const { engine: readyEngine } = useWebLLMStore.getState();
 
       const state: ChatMessage = {
         role: MessageRole.ASSISTANT,
@@ -216,15 +241,15 @@ User Query: ${request.query}
               { role: "user", content: userContent }
           ];
 
-          if (!engine) {
+          if (!readyEngine) {
               handleEvent({
                   event: StreamEvent.TEXT_CHUNK,
-                  data: { text: "\n\n**Error:** WebLLM Engine is not ready. Please wait for initialization or select a generic model." }
+                  data: { text: "\n\n**Error:** WebLLM Engine failed to initialize." }
               }, state);
               return;
           }
 
-          const completion = await engine.chat.completions.create({
+          const completion = await readyEngine.chat.completions.create({
               stream: true,
               messages: messages as any,
               temperature: 0.7,
