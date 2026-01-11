@@ -12,7 +12,7 @@ export function OfflineModeToggle() {
     <div className="flex items-center space-x-2 border p-1 px-3 rounded-full hover:bg-accent/50 transition-colors">
       <Switch
         id="offline-mode"
-        checked={!offlineMode} // Checked means ONLINE
+        checked={offlineMode} // Checked means OFFLINE
         onCheckedChange={toggleOfflineMode}
         className="scale-75"
       />
