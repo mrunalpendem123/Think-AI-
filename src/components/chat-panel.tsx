@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@/hooks/chat";
-import { useChatStore } from "@/stores";
+import { useChatStore, useConfigStore } from "@/stores";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AskInput } from "./ask-input";
@@ -94,6 +94,8 @@ export const ChatPanel = ({ threadId }: { threadId?: number }) => {
     }
   }, [messages, setThreadId]);
 
+  const { offlineMode } = useConfigStore();
+
   return (
     <>
       {messages.length > 0 || threadId || (queryMessage && hasRun.current) ? (
@@ -122,8 +124,12 @@ export const ChatPanel = ({ threadId }: { threadId?: number }) => {
       ) : (
         <div className="w-full flex flex-col justify-center items-center">
             <div className="flex flex-col items-center gap-2 mb-8">
-              <span className="text-3xl">Ask anything locally</span>
-              <span className="text-sm text-muted-foreground text-center">The first SLM-based search that works 100% locally in your browser.</span>
+              <span className="text-3xl text-center">
+                  {offlineMode ? "Ask anything locally without internet" : "Ask anything locally"}
+              </span>
+              <span className="text-sm text-muted-foreground text-center">
+                  {offlineMode ? "Chase curiosity without internet" : "The first SLM-based search that works 100% locally in your browser."}
+              </span>
             </div>
           <AskInput sendMessage={handleSend} />
           <div className="w-full flex flex-row px-3 justify-between space-y-2 pt-1">
