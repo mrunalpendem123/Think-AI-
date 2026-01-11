@@ -70,15 +70,23 @@ export const useWebLLMStore = create<WebLLMState>((set, get) => ({
                   set({ progress: report.text });
               };
               
-              const eng = await CreateMLCEngine(modelId, { 
+              const timeoutPromise = new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error("Model initialization timed out (check internet connection)")), 60000)
+              );
+              
+              const engPromise = CreateMLCEngine(modelId, { 
                   initProgressCallback,
                   logLevel: "INFO" 
               });
+
+              // Race between creation and timeout
+              const eng = await Promise.race([engPromise, timeoutPromise]) as MLCEngine;
               set({ engine: eng });
           }
       } catch (err: any) {
           console.error("Failed to load model:", err);
           set({ progress: `Error: ${err.message}` });
+          set({ engine: null }); // Ensure engine is null on error
       } finally {
           set({ isLoading: false });
       }

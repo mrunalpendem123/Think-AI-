@@ -302,6 +302,9 @@ User Query: ${request.query}
 
       } catch (err) {
           console.error("Chat Error:", err);
+          if (String(err).includes("disposed")) {
+               useWebLLMStore.setState({ engine: null });
+          }
           handleEvent({
               event: StreamEvent.ERROR,
               data: { detail: String(err) }
