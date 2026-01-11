@@ -1,7 +1,7 @@
 "use client";
 
 import { useChatStore } from "@/stores";
-import { HistoryIcon, PlusIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -43,14 +43,6 @@ export function Navbar() {
       </div>
       <div className="flex items-center gap-4">
         <OfflineModeToggle />
-        <Link href="/history" passHref>
-          <div className="font-medium hover:underline decoration-tint underline-offset-4 transition-all duration-200 ease-in-out transform hover:scale-[1.02] text-left break-words normal-case">
-            <div className="flex items-center gap-2">
-              <HistoryIcon className="w-4 h-4" />
-              History
-            </div>
-          </div>
-        </Link>
         <ModeToggle />
       </div>
     </header>

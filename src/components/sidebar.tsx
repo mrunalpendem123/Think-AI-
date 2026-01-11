@@ -6,6 +6,7 @@ import { useChatStore } from "@/stores";
 import { ChevronLeft, ChevronRight, MessageSquare, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { SiGithub } from "react-icons/si";
 import { Button } from "./ui/button";
 
 export function Sidebar() {
@@ -104,6 +105,14 @@ export function Sidebar() {
             )}
           </div>
         ))}
+      </div>
+
+      <div className={cn("p-2 border-t flex items-center gap-1", isCollapsed ? "justify-center flex-col" : "justify-around")}>
+        <a href="https://github.com/mrunalpendem123/Think-AI-" target="_blank" rel="noopener noreferrer">
+             <Button variant="ghost" size="icon" title="View Source on GitHub">
+                <SiGithub className="w-4 h-4" />
+             </Button>
+        </a>
       </div>
     </div>
   );
