@@ -1,23 +1,40 @@
-import { useQuery } from "@tanstack/react-query";
-import { env } from "@/env.mjs";
-import { ThreadResponse } from "../../generated";
-
-const BASE_URL = env.NEXT_PUBLIC_API_URL;
-
-const fetchChatThread = async (threadId: number): Promise<ThreadResponse> => {
-  const response = await fetch(`${BASE_URL}/thread/${threadId}`);
-  return await response.json();
-};
+import { deleteThread, getAllThreads, getThread, saveThread, Thread } from "@/lib/indexed-db";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const useChatThread = (threadId?: number) => {
-  const { data, isLoading, error } = useQuery<ThreadResponse | null, Error>({
+  return useQuery({
     queryKey: ["thread", threadId],
     queryFn: async () => {
-      if (!threadId) {
-        return null;
-      }
-      return fetchChatThread(threadId);
+      if (!threadId) return null;
+      return getThread(threadId);
     },
+    enabled: !!threadId,
   });
-  return { data, isLoading, error };
 };
+
+export const useChatThreads = () => {
+  return useQuery({
+    queryKey: ["threads"],
+    queryFn: async () => getAllThreads(),
+  });
+};
+
+export const useSaveThread = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (thread: Omit<Thread, 'id' | 'updatedAt'> & { id?: number }) => saveThread(thread),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["threads"] });
+        }
+    });
+};
+
+export const useDeleteThread = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: number) => deleteThread(id),
+        onSuccess: () => {
+             queryClient.invalidateQueries({ queryKey: ["threads"] });
+        }
+    });
+}

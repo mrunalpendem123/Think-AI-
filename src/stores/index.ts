@@ -5,7 +5,7 @@ import { ChatStore, createMessageSlice } from "./slices/messageSlice";
 
 type StoreState = ChatStore & ConfigStore;
 
-const useStore = create<StoreState>()(
+export const useStore = create<StoreState>()(
   persist(
     (...a) => ({
       ...createMessageSlice(...a),

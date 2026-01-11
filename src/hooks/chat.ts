@@ -1,7 +1,8 @@
+import { saveThread } from "@/lib/indexed-db";
 import { searchWeb } from "@/lib/scraper";
-import { useChatStore, useConfigStore } from "@/stores";
+import { useChatStore, useConfigStore, useStore } from "@/stores";
 import { AVAILABLE_MODELS, useWebLLMStore } from "@/stores/webllm";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import {
     AgentSearchStep,
@@ -18,6 +19,7 @@ import {
 } from "../../generated";
 
 export const useChat = () => {
+  const queryClient = useQueryClient();
   const { addMessage, messages, threadId, setThreadId } = useChatStore();
   const { model, proMode, offlineMode } = useConfigStore();
   
@@ -58,6 +60,24 @@ export const useChat = () => {
         setStreamingMessage(null);
         setIsStreamingMessage(false);
         setIsStreamingProSearch(false);
+        
+        // Save to IndexedDB
+        // We use a timeout to let the store update? Or just read current messages + new one.
+        // Better: Read store messages AFTER addMessage.
+        setTimeout(async () => {
+             const { messages, threadId } = useStore.getState();
+             const title = messages[0]?.content.slice(0, 50) || "New Chat";
+             const newId = await saveThread({
+                 id: threadId ? Number(threadId) : undefined,
+                 title,
+                 messages,
+             });
+             if (!threadId) {
+                 setThreadId(newId);
+             }
+             queryClient.invalidateQueries({ queryKey: ["threads"] });
+        }, 100);
+
         if (endData.thread_id) {
            setThreadId(endData.thread_id);
         }

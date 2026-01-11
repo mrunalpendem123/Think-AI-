@@ -1,5 +1,6 @@
 import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/nav";
+import { Sidebar } from "@/components/sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
@@ -54,10 +55,14 @@ export default function RootLayout({
               disableTransitionOnChange
             >
               <Navbar />
-              {children}
+              <div className="flex h-screen pt-[60px] overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 w-full h-full overflow-y-auto relative bg-background">
+                      {children}
+                      <Footer />
+                  </main>
+              </div>
               <Toaster />
-              <Footer />
-              <Footer />
               <Analytics />
               <script
                 dangerouslySetInnerHTML={{
