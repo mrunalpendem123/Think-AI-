@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { ConfigStore, createConfigSlice } from "./slices/configSlice";
-import { createMessageSlice, ChatStore } from "./slices/messageSlice";
+import { ChatStore, createMessageSlice } from "./slices/messageSlice";
 
 type StoreState = ChatStore & ConfigStore;
 
@@ -17,6 +17,7 @@ const useStore = create<StoreState>()(
         model: state.model,
         localMode: state.localMode,
         proMode: state.proMode,
+        offlineMode: state.offlineMode,
       }),
     },
   ),
@@ -39,4 +40,6 @@ export const useConfigStore = () =>
     setModel: state.setModel,
     proMode: state.proMode,
     toggleProMode: state.toggleProMode,
+    offlineMode: state.offlineMode,
+    toggleOfflineMode: state.toggleOfflineMode,
   }));

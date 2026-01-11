@@ -19,7 +19,7 @@ import {
 
 export const useChat = () => {
   const { addMessage, messages, threadId, setThreadId } = useChatStore();
-  const { model, proMode } = useConfigStore();
+  const { model, proMode, offlineMode } = useConfigStore();
   
   // Initialize WebLLM Store
   const { engine, loadModel, currentModelId } = useWebLLMStore();
@@ -130,22 +130,27 @@ export const useChat = () => {
 
       try {
           // 2. Perform Search
-          const searchData = await searchWeb(request.query);
-          const searchResults: SearchResult[] = searchData.results.map((r: any, i: number) => ({
-              id: i,
-              title: r.title,
-              url: r.url,
-              content: r.content,
-              icon: "", 
-              metadata: ""
-          }));
-          const images = (searchData.images || []).map((img: any) => typeof img === 'string' ? img : img.url);
+          let searchResults: SearchResult[] = [];
+          let images: string[] = [];
+          
+          if (!offlineMode) {
+              const searchData = await searchWeb(request.query);
+              searchResults = searchData.results.map((r: any, i: number) => ({
+                  id: i,
+                  title: r.title,
+                  url: r.url,
+                  content: r.content,
+                  icon: "", 
+                  metadata: ""
+              }));
+              images = (searchData.images || []).map((img: any) => typeof img === 'string' ? img : img.url);
 
-          // Emit Search Results
-          handleEvent({
-              event: StreamEvent.SEARCH_RESULTS,
-              data: { results: searchResults, images: images }
-          }, state);
+              // Emit Search Results
+              handleEvent({
+                  event: StreamEvent.SEARCH_RESULTS,
+                  data: { results: searchResults, images: images }
+              }, state);
+          }
 
           // 3. Construct Prompt
           const context = searchResults.map(r => `Title: ${r.title}\nContent: ${r.content}`).join("\n\n");
@@ -198,7 +203,10 @@ export const useChat = () => {
           let systemPrompt = "";
           let userContent = "";
 
-          if (proMode) {
+          if (offlineMode) {
+             systemPrompt = "You are a helpful AI assistant running in offline mode. Answer the user's question based on your internal knowledge. Do not try to search the web.";
+             userContent = request.query;
+          } else if (proMode) {
               const { DEEPRESEARCH_SYS_PROMPT } = await import("@/lib/deep-research-prompt");
               systemPrompt = DEEPRESEARCH_SYS_PROMPT;
               

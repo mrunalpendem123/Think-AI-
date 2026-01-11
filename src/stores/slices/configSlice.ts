@@ -6,12 +6,14 @@ type State = {
   model: ChatModel;
   localMode: boolean;
   proMode: boolean;
+  offlineMode: boolean;
 };
 
 type Actions = {
   setModel: (model: ChatModel) => void;
   toggleLocalMode: () => void;
   toggleProMode: () => void;
+  toggleOfflineMode: () => void;
 };
 
 export type ConfigStore = State & Actions;
@@ -25,6 +27,7 @@ export const createConfigSlice: StateCreator<
   model: ChatModel.GPT_4O_MINI,
   localMode: false,
   proMode: false,
+  offlineMode: false,
   setModel: (model: ChatModel) => set({ model }),
   toggleLocalMode: () =>
     set((state) => {
@@ -47,4 +50,6 @@ export const createConfigSlice: StateCreator<
       }
       return { ...state, proMode: !state.proMode };
     }),
+  toggleOfflineMode: () =>
+    set((state) => ({ ...state, offlineMode: !state.offlineMode })),
 });

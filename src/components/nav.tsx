@@ -6,6 +6,7 @@ import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ModeToggle } from "./mode-toggle";
+import { OfflineModeToggle } from "./offline-mode-toggle";
 import { Button } from "./ui/button";
 
 const NewChatButton = () => {
@@ -41,6 +42,7 @@ export function Navbar() {
         {onHomePage ? <TextLogo /> : <NewChatButton />}
       </div>
       <div className="flex items-center gap-4">
+        <OfflineModeToggle />
         <Link href="/history" passHref>
           <div className="font-medium hover:underline decoration-tint underline-offset-4 transition-all duration-200 ease-in-out transform hover:scale-[1.02] text-left break-words normal-case">
             <div className="flex items-center gap-2">
