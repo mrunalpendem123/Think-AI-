@@ -5,6 +5,7 @@ import { PlusIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { ModeToggle } from "./mode-toggle";
 import { OfflineModeToggle } from "./offline-mode-toggle";
 import { WebSearchToggle } from "./web-search-toggle";
@@ -35,11 +36,16 @@ export function Navbar() {
     <header className="w-full flex fixed p-1 z-50 px-2 bg-background/95 justify-between items-center">
       <div className="flex items-center gap-2">
         <Link href="/" passHref onClick={() => (location.href = "/")}>
-          <img
-            src={theme === "light" ? "/logo-black.png" : "/logo-white.png"}
-            alt="Logo"
-            className="w-12 h-12"
-          />
+          <div className="w-12 h-12 relative">
+            <Image
+              src={theme === "light" ? "/logo-black.png" : "/logo-white.png"}
+              alt="Think AI Logo"
+              fill
+              className="object-contain"
+              priority
+              unoptimized
+            />
+          </div>
         </Link>
         {onHomePage ? <TextLogo /> : <NewChatButton />}
       </div>
