@@ -4,6 +4,7 @@ import { useChatStore } from "@/stores";
 import { PlusIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
+import { UserButton } from "@clerk/nextjs";
 import { ModeToggle } from "./mode-toggle";
 import { OfflineModeToggle } from "./offline-mode-toggle";
 import { WebSearchToggle } from "./web-search-toggle";
@@ -41,6 +42,7 @@ export function Navbar() {
         <WebSearchToggle />
         <AgentModeToggle />
         <ModeToggle />
+        <UserButton />
       </div>
     </header>
   );
