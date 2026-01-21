@@ -37,6 +37,7 @@
   ],
   "exclude": [
     "node_modules",
-    "frontend_backup"
+    "frontend_backup",
+    "openapi-ts.config.ts"
   ]
 }
