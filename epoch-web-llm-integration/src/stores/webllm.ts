@@ -1,80 +1,59 @@
+import { create } from "zustand";
 import { CreateMLCEngine, InitProgressCallback, MLCEngine } from "@mlc-ai/web-llm";
-import { create } from 'zustand';
 
-// Define ModelOption interface
 export interface ModelOption {
     id: string;
     name: string;
     provider: string;
     size: string;
     isLocal?: boolean;
-    modelRecord?: any; // To allow custom model configuration
+    modelRecord?: any;
 }
 
 export const AVAILABLE_MODELS: ModelOption[] = [
     {
         id: "Qwen2.5-3B-Instruct-q4f32_1-MLC",
-        name: "Qwen 2.5 3B (Browser)",
+        name: "Qwen 2.5 3B",
         provider: "Alibaba",
         size: "3B",
-        isLocal: false,
+        isLocal: false
     },
     {
-        id: "Llama-3.2-3B-Instruct-q4f16_1-MLC",
-        name: "Llama 3.2 3B (Browser)",
+        id: "Llama-3.2-3B-Instruct-q4f32_1-MLC",
+        name: "Llama 3.2 3B",
         provider: "Meta",
         size: "3B",
-        isLocal: false,
+        isLocal: false
     },
     {
         id: "gemma-2-2b-it-q4f32_1-MLC",
-        name: "Gemma 2 2B (Browser)",
+        name: "Gemma 2 2B",
         provider: "Google",
         size: "2B",
-        isLocal: false,
+        isLocal: false
     },
     {
         id: "Phi-3.5-mini-instruct-q4f16_1-MLC",
-        name: "Phi 3.5 Mini (Browser)",
+        name: "Phi 3.5 Mini",
         provider: "Microsoft",
         size: "3.8B",
-        isLocal: false,
-    },
-    {
-        id: "LiquidAI/LFM2.5-1.2B-Instruct",
-        name: "LFM 2.5 1.2B Instruct (Local Python)",
-        provider: "Liquid AI",
-        size: "1.2B",
-        isLocal: true,
-    },
-    {
-        id: "NousResearch/Hermes-3-Llama-3.2-3B",
-        name: "Writing",
-        provider: "Nous Research",
-        size: "3B",
-        isLocal: true,
-    },
-    {
-        id: "Mistral-7B-Instruct-v0.3-q4f16_1-MLC",
-        name: "Mistral 7B Instruct v0.3",
-        provider: "Mistral AI",
-        size: "7B",
-        isLocal: false,
-    },
+        isLocal: false
+    }
 ];
 
 interface WebLLMState {
     engine: MLCEngine | null;
-    currentModelId: string;
     isLoading: boolean;
     progress: string;
+    currentModelId: string;
 
+    // Actions
     loadModel: (modelId: string) => Promise<void>;
     resetEngine: () => Promise<void>;
+    setEngine: (engine: MLCEngine | null) => void;
 }
 
-
-// Helper to mimic WebLLM's streaming response from our API
+// Helper for Local API Streaming
 async function* apiStreamGenerator(response: Response) {
     const reader = response.body?.getReader();
     const decoder = new TextDecoder();
@@ -89,9 +68,8 @@ async function* apiStreamGenerator(response: Response) {
         const chunk = decoder.decode(value, { stream: true });
         buffer += chunk;
 
-        // Split by lines
         const lines = buffer.split("\n");
-        buffer = lines.pop() || ""; // Keep incomplete line
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
             const trimmed = line.trim();
@@ -99,9 +77,6 @@ async function* apiStreamGenerator(response: Response) {
             if (trimmed.startsWith("data: ")) {
                 try {
                     const json = JSON.parse(trimmed.slice(6));
-                    // OpenAI format to WebLLM format bridge if needed
-                    // WebLLM expects: { choices: [{ delta: { content: "..." } }] }
-                    // Our local server sends OpenAI chunks, which match this structure.
                     if (json.choices && json.choices[0]?.delta) {
                         yield {
                             choices: [{
@@ -112,7 +87,7 @@ async function* apiStreamGenerator(response: Response) {
                         };
                     }
                 } catch (e) {
-                    // ignore parse errors
+                    // ignore
                 }
             }
         }
@@ -121,19 +96,22 @@ async function* apiStreamGenerator(response: Response) {
 
 export const useWebLLMStore = create<WebLLMState>((set, get) => ({
     engine: null,
-    currentModelId: "",
     isLoading: false,
     progress: "",
+    currentModelId: "Qwen2.5-3B-Instruct-q4f32_1-MLC",
+
+    setEngine: (engine) => set({ engine }),
 
     loadModel: async (modelId: string) => {
-        const { engine, currentModelId, isLoading } = get();
-        if (isLoading || (engine && currentModelId === modelId)) return;
+        const { engine } = get();
+        // Check if already loaded? 
+        // Logic from use-web-llm.ts:
 
-        const modelConfig = AVAILABLE_MODELS.find(m => m.id === modelId);
-        // @ts-ignore
-        const isLocal = modelConfig?.isLocal;
+        const availableModel = AVAILABLE_MODELS.find(m => m.id === modelId);
+        const isLocal = availableModel?.isLocal;
+        const customRecord = availableModel?.modelRecord;
 
-        set({ isLoading: true, currentModelId: modelId, progress: isLocal ? "Connecting to Local API..." : "Initializing WebLLM..." });
+        set({ isLoading: true, progress: isLocal ? "Connecting to Local API..." : "Initializing WebLLM...", currentModelId: modelId });
 
         try {
             if (engine) {
@@ -142,79 +120,62 @@ export const useWebLLMStore = create<WebLLMState>((set, get) => ({
             }
 
             if (isLocal) {
-                set({ progress: "Pinging Local Python Server..." });
-
-                // Verify connection
-                try {
-                    const ping = await fetch("/api/local-llm", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ model: modelId, messages: [], stream: false, check_health: true })
-                    });
-                    if (!ping.ok) throw new Error("Local Server Unreachable");
-                } catch (e) {
-                    // Ignore error for now to allow trying, or throw?
-                    // If we throw, the user knows it failed.
-                    console.error("Local Server Ping Failed", e);
-                    set({ progress: "Warning: Local Server Unreachable (Check terminal)" });
-                    // We continue to set the engine to allow retry, but show warning
-                }
-
                 await new Promise(r => setTimeout(r, 500));
+                console.log(`Switched to Local API mode for: ${modelId}`);
+                set({ progress: "" });
 
-                // Create Local Mock Engine
-                const localEngine: any = {
+                // For local, we mock the engine
+                const mockEngine = {
                     chat: {
                         completions: {
                             create: async (params: any) => {
-                                const response = await fetch("/api/local-llm", {
+                                const response = await fetch("http://127.0.0.1:11434/v1/chat/completions", {
                                     method: "POST",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({
                                         model: modelId,
                                         messages: params.messages,
-                                        temperature: params.temperature
+                                        temperature: params.temperature,
+                                        stream: params.stream
                                     })
                                 });
 
-                                if (!response.ok) {
-                                    const err = await response.text();
-                                    throw new Error(`Local API Failed: ${err}`);
-                                }
+                                if (!response.ok) throw new Error("Local API Request Failed");
 
                                 if (params.stream) {
                                     return apiStreamGenerator(response);
                                 }
-                                return response.json();
+                                return await response.json();
                             }
                         }
                     },
-                    unload: async () => { console.log("Local engine unloaded"); }
-                };
+                    unload: async () => { }
+                } as unknown as MLCEngine;
 
-                set({ engine: localEngine, progress: "" });
+                set({ engine: mockEngine });
+
             } else {
                 const initProgressCallback: InitProgressCallback = (report) => {
                     set({ progress: report.text });
                 };
 
-                const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error("Model initialization timed out (check internet connection)")), 60000)
-                );
+                const engineConfig: any = { initProgressCallback };
+                if (customRecord) {
+                    engineConfig.appConfig = {
+                        model_list: [customRecord],
+                        use_indexed_db_cache: true
+                    };
+                }
 
-                const engPromise = CreateMLCEngine(modelId, {
-                    initProgressCallback,
-                    logLevel: "INFO"
-                });
-
-                // Race between creation and timeout
-                const eng = await Promise.race([engPromise, timeoutPromise]) as MLCEngine;
+                console.log("Calling CreateMLCEngine with:", { modelId, engineConfig });
+                const eng = await CreateMLCEngine(modelId, engineConfig);
+                console.log(`WebLLM Engine loaded: ${modelId}`);
                 set({ engine: eng });
             }
-        } catch (err: any) {
-            console.error("Failed to load model:", err);
-            set({ progress: `Error: ${err.message}` });
-            set({ engine: null }); // Ensure engine is null on error
+
+        } catch (error) {
+            console.error("Failed to load model", error);
+            set({ progress: `Error: ${error instanceof Error ? error.message : String(error)}` });
         } finally {
             set({ isLoading: false });
         }
@@ -226,18 +187,5 @@ export const useWebLLMStore = create<WebLLMState>((set, get) => ({
             await engine.unload();
         }
         set({ engine: null, currentModelId: "", progress: "" });
-        // Clear WebLLM cache if possible (requires internal access or user action)
-        try {
-            // Attempt to clear IndexedDB databases related to WebLLM
-            const dbs = await window.indexedDB.databases();
-            for (const db of dbs) {
-                if (db.name?.includes("webllm") || db.name?.includes("mlc")) {
-                    window.indexedDB.deleteDatabase(db.name);
-                }
-            }
-            console.log("Cleared WebLLM IndexedDB caches.");
-        } catch (e) {
-            console.error("Failed to clear cache:", e);
-        }
     }
 }));
