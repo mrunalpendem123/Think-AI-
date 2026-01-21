@@ -1,5 +1,6 @@
 {
-  "buildCommand": "npm run build",
-  "installCommand": "npm install --legacy-peer-deps"
+  "buildCommand": "cd epoch-web-llm-integration && npm run build",
+  "outputDirectory": "epoch-web-llm-integration/.next",
+  "installCommand": "cd epoch-web-llm-integration && npm install --legacy-peer-deps",
+  "framework": "nextjs"
 }
-
